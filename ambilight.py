@@ -35,7 +35,7 @@ class AmbilightWorker(QThread):
                 led_rgb_data = bottom_rgb + left_rgb + top_rgb + right_rgb
 
                 # DEBUG: ensure correct size
-                if len(led_rgb_data) != NUM_LEDS * 3:
+                if len(led_rgb_data) != NUM_LEDS * 2:
                     print("ERROR: wrong data size:", len(led_rgb_data))
                     continue
 
@@ -59,7 +59,14 @@ class AmbilightWorker(QThread):
 
     def get_average_colour(self, zone):
         b, g, r, _ = np.mean(zone, axis=(0,1))
-        return int(r), int(g), int(b)
+
+        r = r >> 3
+        g = g >> 3
+        b = b >> 3
+        
+        shifted = r << 10 | g << 5 | b
+        packed = shifted.to_bytes(2, 'big')
+        return packed
 
 
     def top_slice(self):
