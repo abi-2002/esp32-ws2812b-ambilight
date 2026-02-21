@@ -1,0 +1,6 @@
+Capture current ambilight colours and save them for using as custom colour
+Optimisations:
+    - Reduce number of bits per colour from 8 to 5
+    - Then bitpack the 15 (3 x 5 bits) bits into 2 bytes
+    - Screen capture only edges
+    - Downscale the capture
