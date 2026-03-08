@@ -200,11 +200,12 @@ class AmbilightUI(QWidget):
             print("Selected:", r, g, b)
 
 
-            data = [FRAME_START] + [BRIGHTNESS] + [r, g, b] * NUM_LEDS
+            packet = bytearray([FRAME_START, BRIGHTNESS, int(Mode.STATIC)])
+            packet.extend([r, g, b])
 
             try:
                 self.ser.reset_input_buffer()
-                self.ser.write(bytearray(data))
+                self.ser.write(bytearray(packet))
                 self.ser.flush()  
             except:
                 print("Disconnected")
@@ -270,11 +271,12 @@ def run_cli(args):
 
             print(f"Setting color {r},{g},{b}")
 
-            data = [FRAME_START] + [BRIGHTNESS] + [r, g, b] * NUM_LEDS
-
+            packet = bytearray([FRAME_START, BRIGHTNESS, int(Mode.STATIC)])
+            packet.extend([r, g, b])
+     
             ser.reset_input_buffer()
             ser.reset_output_buffer()
-            ser.write(bytearray(data))
+            ser.write(bytearray(packet))
             
             ser.flush()        
             time.sleep(0.1)   

@@ -40,7 +40,9 @@ class AmbilightWorker(QThread):
                     continue
 
                 self.ser.reset_input_buffer()
-                self.ser.write(bytearray([FRAME_START] + [BRIGHTNESS] + led_rgb_data))
+                packet = bytearray([FRAME_START, BRIGHTNESS, int(Mode.AMBILIGHT)])
+                packet.extend(led_rgb_data)
+                self.ser.write(packet)
                 time.sleep(1 / FPS)
 
             except Exception as e:
@@ -60,9 +62,9 @@ class AmbilightWorker(QThread):
     def get_average_colour(self, zone):
         b, g, r, _ = np.mean(zone, axis=(0,1))
 
-        r = r >> 3
-        g = g >> 3
-        b = b >> 3
+        r = int(r) >> 3
+        g = int(g) >> 3
+        b = int(b) >> 3
         
         shifted = r << 10 | g << 5 | b
         packed = shifted.to_bytes(2, 'big')
