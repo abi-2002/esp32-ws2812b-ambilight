@@ -11,11 +11,14 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QFontDatabase, QFont
 from PySide6.QtCore import Qt, QThread, QTimer
 
-from ambilight import AmbilightWorker
+from worker import AmbilightWorker
 from configs import *
 
 
-# 🖥️ UI Class
+SERIAL_WRITE_TIMEOUT = 1
+
+
+# UI Class
 class AmbilightUI(QWidget):
     def __init__(self):
         super().__init__()
@@ -39,7 +42,7 @@ class AmbilightUI(QWidget):
         self.timer.timeout.connect(self.try_connect)
         self.timer.start(2000)
 
-    # 🔤 Load Reddit Sans
+    # Load Reddit Sans
     def load_font(self):
         font_id = QFontDatabase.addApplicationFont(FONT)
 
@@ -51,7 +54,7 @@ class AmbilightUI(QWidget):
         else:
             print("Font failed to load")
 
-    # 🎨 Setup UI
+    # Setup UI
     def setup_ui(self):
         main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignTop)
@@ -127,7 +130,7 @@ class AmbilightUI(QWidget):
         }
         """
 
-    # 🔌 Try connecting Arduino
+    # Try connecting Arduino
     def try_connect(self):
         if self.connected:
             return
@@ -138,7 +141,7 @@ class AmbilightUI(QWidget):
             try:
                 print(f"Trying {port.device}...")
 
-                self.ser = serial.Serial(port.device, BAUD_RATE, write_timeout=0)
+                self.ser = serial.Serial(port.device, BAUD_RATE, write_timeout=SERIAL_WRITE_TIMEOUT)
                 time.sleep(2)
 
                 self.connected = True
@@ -163,12 +166,12 @@ class AmbilightUI(QWidget):
         self.status_label.setStyleSheet("color: #ff5555; font-size: 18px;")
         self.enable_controls(False)
 
-    # 🔘 Enable/disable UI
+    # Enable/disable UI
     def enable_controls(self, enabled):
         self.ambilight_btn.setEnabled(enabled)
         self.custom_btn.setEnabled(enabled)
 
-    # 🎯 Start/Stop Ambilight
+    #  Start/Stop Ambilight
     def toggle_ambilight(self):
         if not self.connected or self.worker is None:
             return
@@ -180,7 +183,7 @@ class AmbilightUI(QWidget):
             self.worker.start()
             self.ambilight_btn.setText("Stop Ambilight")
 
-    # 🎨 Color picker
+    #  Color picker
     def open_color_picker(self):
         if not self.connected or self.ser is None:
             return
@@ -211,7 +214,7 @@ class AmbilightUI(QWidget):
                 print("Disconnected")
                 self.connected = False
 
-    # 🛑 Cleanup
+    #  Cleanup
     def closeEvent(self, event):
         if self.worker and self.worker.isRunning():
             self.worker.stop()
@@ -233,7 +236,7 @@ def run_cli(args):
     for port in ports:
         try:
             print(f"Trying {port.device}...")
-            ser = serial.Serial(port.device, BAUD_RATE, write_timeout=0)
+            ser = serial.Serial(port.device, BAUD_RATE, write_timeout=SERIAL_WRITE_TIMEOUT)
             time.sleep(2)
             print(f"Connected to {port.device}")
             break
@@ -296,12 +299,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # 🔥 CLI mode
+    #  CLI mode
     if args.ambilight or args.custom:
         run_cli(args)
         sys.exit(0)
 
-    # 🔥 GUI mode
+    #  GUI mode
     app = QApplication(sys.argv)
 
     window = AmbilightUI()

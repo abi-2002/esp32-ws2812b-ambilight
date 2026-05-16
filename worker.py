@@ -1,12 +1,17 @@
 from PySide6.QtCore import Qt, QThread, QTimer
 import time
+import serial
 from mss import mss
 import numpy as np
 
 from configs import *
 
 
-# 🧵 Ambilight Worker Thread
+SERIAL_WRITE_RETRIES = 3
+SERIAL_RETRY_DELAY = 0.05
+
+
+#  Ambilight Worker Thread
 class AmbilightWorker(QThread):
     def __init__(self, ser):
         super().__init__()
@@ -39,15 +44,36 @@ class AmbilightWorker(QThread):
                     print("ERROR: wrong data size:", len(led_rgb_data))
                     continue
 
-                self.ser.reset_input_buffer()
                 packet = bytearray([FRAME_START, BRIGHTNESS, int(Mode.AMBILIGHT)])
                 packet.extend(led_rgb_data)
-                self.ser.write(packet)
+                self.write_packet(packet)
                 time.sleep(1 / FPS)
 
             except Exception as e:
-                print("Serial error:", e)
+                print("Ambilight error:", e)
                 self.running = False
+
+    def write_packet(self, packet):
+        for attempt in range(1, SERIAL_WRITE_RETRIES + 1):
+            try:
+                if not self.ser or not self.ser.is_open:
+                    raise serial.SerialException("serial port is closed")
+
+                self.ser.write(packet)
+                return
+
+            except (serial.SerialException, serial.SerialTimeoutException, OSError, PermissionError) as e:
+                print(f"Serial write failed ({attempt}/{SERIAL_WRITE_RETRIES}):", e)
+
+                try:
+                    self.ser.reset_output_buffer()
+                except Exception:
+                    pass
+
+                if attempt == SERIAL_WRITE_RETRIES:
+                    raise
+
+                time.sleep(SERIAL_RETRY_DELAY)
 
     def stop(self):
         self.running = False

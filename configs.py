@@ -16,7 +16,7 @@ FRAME_START = 255
 NUM_LEDS = HORIZONTAL_ZONES*2 + VERTICAL_ZONES*2
 FPS = 60
 
-BRIGHTNESS = 15
+BRIGHTNESS = 10
 
 from enum import IntEnum
 class Mode(IntEnum):
