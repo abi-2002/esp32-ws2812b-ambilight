@@ -24,5 +24,6 @@ class Mode(IntEnum):
     STATIC = 1
 
 # SERIAL COMM
-SERIAL_PORT = 'COM3' 
+# For ESP32 Classic Bluetooth, set this to the paired Bluetooth COM port.
+SERIAL_PORT = 'COM6' 
 BAUD_RATE = 115200

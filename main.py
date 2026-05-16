@@ -18,6 +18,20 @@ from configs import *
 SERIAL_WRITE_TIMEOUT = 1
 
 
+def serial_candidates():
+    ports = serial.tools.list_ports.comports()
+    devices = []
+
+    if SERIAL_PORT:
+        devices.append((SERIAL_PORT, SERIAL_PORT))
+
+    for port in ports:
+        if port.device != SERIAL_PORT:
+            devices.append((port.device, port.description))
+
+    return devices
+
+
 # UI Class
 class AmbilightUI(QWidget):
     def __init__(self):
@@ -135,20 +149,18 @@ class AmbilightUI(QWidget):
         if self.connected:
             return
 
-        ports = serial.tools.list_ports.comports()
-
-        for port in ports:
+        for device, description in serial_candidates():
             try:
-                print(f"Trying {port.device}...")
+                print(f"Trying {device}...")
 
-                self.ser = serial.Serial(port.device, BAUD_RATE, write_timeout=SERIAL_WRITE_TIMEOUT)
+                self.ser = serial.Serial(device, BAUD_RATE, write_timeout=SERIAL_WRITE_TIMEOUT)
                 time.sleep(2)
 
                 self.connected = True
 
-                print(f"Connected to {port.device}")
+                print(f"Connected to {device}")
 
-                self.status_label.setText(f"Connected: {port.description}")
+                self.status_label.setText(f"Connected: {description}")
                 self.status_label.setStyleSheet("color: #55ff55; font-size: 18px;")
 
                 self.enable_controls(True)
@@ -231,14 +243,12 @@ def run_cli(args):
     # Find Arduino
     ser = None
 
-    ports = serial.tools.list_ports.comports()
-
-    for port in ports:
+    for device, description in serial_candidates():
         try:
-            print(f"Trying {port.device}...")
-            ser = serial.Serial(port.device, BAUD_RATE, write_timeout=SERIAL_WRITE_TIMEOUT)
+            print(f"Trying {device}...")
+            ser = serial.Serial(device, BAUD_RATE, write_timeout=SERIAL_WRITE_TIMEOUT)
             time.sleep(2)
-            print(f"Connected to {port.device}")
+            print(f"Connected to {device}")
             break
         except:
             continue

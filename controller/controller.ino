@@ -1,8 +1,16 @@
 #define FASTLED_ALLOW_INTERRUPTS 0
 #include <FastLED.h>
+#ifdef ESP32
+#include "BluetoothSerial.h"
+BluetoothSerial SerialBT;
+#endif
 
 #define NUM_LEDS 92
+#ifdef ESP32
+#define DATA_PIN 5
+#else
 #define DATA_PIN 8
+#endif
 #define FRAME_START 255
 
 #define MODE_AMBILIGHT 0
@@ -11,7 +19,7 @@
 CRGB leds[NUM_LEDS];
 
 byte buffer[NUM_LEDS * 2];
-int index = 0;
+int idx = 0;
 bool receiving = false;
 
 uint8_t brightness = 30;
@@ -19,6 +27,9 @@ uint8_t mode = MODE_AMBILIGHT;
 
 void setup() {
   Serial.begin(115200);
+#ifdef ESP32
+  SerialBT.begin("AmbilightESP32");
+#endif
 
   FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
   FastLED.setBrightness(brightness);
@@ -28,9 +39,15 @@ void setup() {
 
 void loop() {
 
+#ifdef ESP32
+  while (SerialBT.available()) {
+
+    byte incoming = SerialBT.read();
+#elsez
   while (Serial.available()) {
 
     byte incoming = Serial.read();
+#endif
 
     // Data format - [FRAME_START][Brightness][Mode][Data...]
     // Mode - 0: Ambilight (packed RGB565), 1: Custom Color (RGB888)
@@ -38,23 +55,23 @@ void loop() {
     if (!receiving) {
       if (incoming == FRAME_START) {
         receiving = true;
-        index = -2;   // indicates we're expecting Brightness next
+        idx = -2;   // indicates we're expecting Brightness next
       }
       continue;
     }
 
     // brightness
-    if (index == -2) {
+    if (idx == -2) {
       brightness = incoming;
       FastLED.setBrightness(brightness);
-      index = -1; // indicates we're expecting Mode next
+      idx = -1; // indicates we're expecting Mode next
       continue;
     }
 
     // mode
-    if (index == -1) {
+    if (idx == -1) {
       mode = incoming;
-      index = 0;
+      idx = 0;
       continue;
     }
 
@@ -63,11 +80,11 @@ void loop() {
     // -------------------------
     if (mode == MODE_AMBILIGHT) {
 
-      buffer[index++] = incoming;
+      buffer[idx++] = incoming;
 
       // Each LED is sent as 2 bytes (RGB565 packed format)
       // Once we have received data for all LEDs, we can update the strip
-      if (index >= NUM_LEDS * 2) {
+      if (idx >= NUM_LEDS * 2) {
 
         for (int i = 0; i < NUM_LEDS; i++) {
 
@@ -96,10 +113,10 @@ void loop() {
     // -------------------------
     else if (mode == MODE_STATIC) {
 
-      buffer[index++] = incoming;
+      buffer[idx++] = incoming;
 
       // For static mode, we expect 3 bytes (R, G, B) for the entire strip
-      if (index >= 3) {
+      if (idx >= 3) {
 
         uint8_t r = buffer[0];
         uint8_t g = buffer[1];
