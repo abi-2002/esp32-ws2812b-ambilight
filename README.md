@@ -87,4 +87,4 @@ Packets follow this format:
 
 ## Android App
 
-The companion [Ambilight Controller](https://github.com/abi-2002/ambilight-controller-android) app connects to the ESP32 via Bluetooth and sends static color packets using the same protocol.
+The companion [Ambilight Controller](https://github.com/abi-2002/AmbilightController) app connects to the ESP32 via Bluetooth and sends static color packets using the same protocol.
